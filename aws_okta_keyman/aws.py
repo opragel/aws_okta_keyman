@@ -93,6 +93,17 @@ class Credentials(object):
              'aws_secret_access_key': str(creds['SecretAccessKey']),
              'aws_security_token': str(creds['SessionToken']),
              'aws_session_token': str(creds['SessionToken'])})
+        if name != 'default':
+            self._add_profile(
+                'default',
+                {'output': 'json',
+                 'region': str(region),
+                 'aws_access_key_id': str(creds['AccessKeyId']),
+                 'aws_secret_access_key': str(creds['SecretAccessKey']),
+                 'aws_security_token': str(creds['SessionToken']),
+                 'aws_session_token': str(creds['SessionToken'])})
+            LOG.info('Wrote profile "{name}" as default to {file}'.format(
+            name=name, file=self.filename))
 
         LOG.info('Wrote profile "{name}" to {file}'.format(
             name=name, file=self.filename))

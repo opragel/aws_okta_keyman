@@ -164,10 +164,21 @@ class Keyman:
         """If there's more than one role available from AWS present the user
         with a list to pick from
         """
-        self.log.warning('Multiple AWS roles found; please select one')
         roles = session.available_roles()
-        role_selection = self.selector_menu(roles, 'role', 'Role')
-        session.set_role(role_selection)
+        if self.config.samlroleid is not None and self.config.accountid is not None:
+            saml_role_selection = "arn:aws:iam::" + str(self.config.accountid) + ":role/" + str(self.config.samlroleid)
+            for role_index, role in enumerate(roles):
+                if saml_role_selection == role["role"]:
+                    role_match = True
+                    role_match_index = role_index
+            if role_match is True:
+                self.log.info('Found AWS role match')
+                session.set_role(role_match_index)
+                role_selection = role_match_index
+        else:
+            self.log.warning('Multiple AWS roles found; please select one')
+            role_selection = self.selector_menu(roles, 'role', 'Role')
+            session.set_role(role_selection)
         session.assume_role()
         return role_selection
 

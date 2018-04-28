@@ -41,12 +41,17 @@ class Config:
         self.reup = None
         self.debug = None
         self.appid = None
+        self.accountid = None
+        self.samlroleid = None
         self.name = 'default'
         self.oktapreview = None
 
     def set_appid_from_account_id(self, account_id):
         """Take an account ID (list index) and sets the appid based on that."""
         self.appid = self.accounts[account_id]['appid']
+        self.accountid = self.accounts[account_id]['accountid']
+        self.samlroleid = self.accounts[account_id]['samlroleid']
+        self.name = self.accounts[account_id]['name']
 
     def validate(self):
         """Ensure we have all the settings we need before continuing."""
@@ -196,6 +201,10 @@ class Config:
                                        'production Okta organization.'
                                    ),
                                    default=False)
+        optional_args.add_argument('-i', '--accountnumber', type=str,
+                                   help='AWS Account Number')
+        optional_args.add_argument('-s', '--samlroleid', type=str,
+                                   help='AWS role name')
 
     @staticmethod
     def read_yaml(filename, raise_on_error=False):
