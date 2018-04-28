@@ -32,7 +32,7 @@ from builtins import str
 from os.path import expanduser
 
 import boto3
-
+from botocore.exceptions import ClientError
 from aws_okta_keyman.aws_saml import SamlAssertion
 
 LOG = logging.getLogger(__name__)
@@ -217,14 +217,22 @@ class Session(object):
                 raise InvalidSaml()
 
         LOG.info('Assuming role: {}'.format(self.role['role']))
+        try:
+            session = self.sts.assume_role_with_saml(
+                RoleArn=self.role['role'],
+                PrincipalArn=self.role['principle'],
+                DurationSeconds=self.sessionduration,
+                SAMLAssertion=self.assertion.encode())
+            self.creds = session['Credentials']
+            self._write()
+        except ClientError as saml_error:
+            if saml_error.response['Error']['Code'] == 'ValidationError':
+                LOG.error('Unable to assume role, is your SAML valid and session duration length allowed?')
+            else:
+                LOG.error('Unhandled SAML validation error')
+            LOG.error(self.assertion.__dict__)
+            raise InvalidSaml()
 
-        session = self.sts.assume_role_with_saml(
-            RoleArn=self.role['role'],
-            PrincipalArn=self.role['principle'],
-            DurationSeconds=self.sessionduration,
-            SAMLAssertion=self.assertion.encode())
-        self.creds = session['Credentials']
-        self._write()
 
     def _write(self):
         """Write out our secrets to the Credentials object."""
@@ -234,5 +242,5 @@ class Session(object):
             creds=self.creds)
         LOG.info('Current time is {time}'.format(
             time=datetime.datetime.utcnow()))
-        LOG.info('Session expires at {time}'.format(
-            time=self.creds['Expiration']))
+        LOG.info('Session expires at {time} ({minutes} minutes)'.format(
+            time=self.creds['Expiration'], minutes=int(self.sessionduration / 60)))
