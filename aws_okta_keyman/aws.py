@@ -124,7 +124,8 @@ class Session(object):
                  assertion,
                  credential_path='~/.aws',
                  profile='default',
-                 region='us-east-1'):
+                 region='us-east-1',
+                 sessionduration=600):
         cred_dir = expanduser(credential_path)
         cred_file = os.path.join(cred_dir, 'credentials')
 
@@ -140,6 +141,7 @@ class Session(object):
 
         self.profile = profile
         self.region = region
+        self.sessionduration = 3600
 
         self.assertion = SamlAssertion(assertion)
         self.writer = Credentials(cred_file)
@@ -176,7 +178,7 @@ class Session(object):
                 self.creds['Expiration'],
                 datetime.datetime.utcnow()))
             LOG.debug(msg)
-            buffer = datetime.timedelta(seconds=600)
+            buffer = datetime.timedelta(seconds=self.sessionduration)
             now = datetime.datetime.utcnow()
             expir = datetime.datetime.strptime(str(self.creds['Expiration']),
                                                '%Y-%m-%d %H:%M:%S+00:00')
@@ -188,6 +190,10 @@ class Session(object):
     def set_role(self, role_index):
         """Set the role based on the supplied index value."""
         self.role = self.assertion.roles()[int(role_index)]
+
+    def set_session_duration(self, session_duration):
+        """Sets the session duration based on supplied number of seconds."""
+        self.sessionduration = session_duration
 
     def available_roles(self):
         """Return the roles availble from AWS."""
@@ -215,6 +221,7 @@ class Session(object):
         session = self.sts.assume_role_with_saml(
             RoleArn=self.role['role'],
             PrincipalArn=self.role['principle'],
+            DurationSeconds=self.sessionduration,
             SAMLAssertion=self.assertion.encode())
         self.creds = session['Credentials']
         self._write()

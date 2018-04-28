@@ -44,6 +44,7 @@ class Config:
         self.accountid = None
         self.samlroleid = None
         self.name = 'default'
+        self.sessionduration = 600
         self.oktapreview = None
 
     def set_appid_from_account_id(self, account_id):
@@ -52,6 +53,7 @@ class Config:
         self.accountid = self.accounts[account_id]['accountid']
         self.samlroleid = self.accounts[account_id]['samlroleid']
         self.name = self.accounts[account_id]['name']
+        self.sessionduration = self.accounts[account_id]['sessionduration']
 
     def validate(self):
         """Ensure we have all the settings we need before continuing."""
@@ -205,6 +207,8 @@ class Config:
                                    help='AWS Account Number')
         optional_args.add_argument('-s', '--samlroleid', type=str,
                                    help='AWS role name')
+        optional_args.add_argument('-l', '--sessionduration', type=str,
+                                   help='AWS session length in seconds')
 
     @staticmethod
     def read_yaml(filename, raise_on_error=False):

@@ -167,6 +167,7 @@ class Keyman:
         roles = session.available_roles()
         if self.config.samlroleid is not None and self.config.accountid is not None:
             saml_role_selection = "arn:aws:iam::" + str(self.config.accountid) + ":role/" + str(self.config.samlroleid)
+            saml_session_duration = self.config.sessionduration
             for role_index, role in enumerate(roles):
                 if saml_role_selection == role["role"]:
                     role_match = True
@@ -174,6 +175,7 @@ class Keyman:
             if role_match is True:
                 self.log.info('Found AWS role match')
                 session.set_role(role_match_index)
+                session.set_session_duration(saml_session_duration)
                 role_selection = role_match_index
         else:
             self.log.warning('Multiple AWS roles found; please select one')
